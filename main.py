@@ -2,6 +2,7 @@ import os
 import re
 
 from dotenv import load_dotenv
+from telegram import ReplyKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 
@@ -52,11 +53,17 @@ def load_questions():
 
 
 def start_command(update, context):
-    update.message.reply_text('Здравствуйте!')
+    custom_keyboard = [['Новый вопрос', 'Сдаться'], ['Мой счёт']]
+    reply_markup = ReplyKeyboardMarkup(custom_keyboard)
+
+    update.message.reply_text('Привет! Я бот для викторин!:', reply_markup=reply_markup)
 
 
 def echo_message(update, context):
-    update.message.reply_text(update.message.text)
+    custom_keyboard = [['Новый вопрос', 'Сдаться'], ['Мой счёт']]
+    reply_markup = ReplyKeyboardMarkup(custom_keyboard)
+
+    update.message.reply_text(update.message.text, reply_markup=reply_markup)
 
 
 def main():
