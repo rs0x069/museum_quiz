@@ -1,4 +1,5 @@
 import os
+import random
 import re
 
 from dotenv import load_dotenv
@@ -49,7 +50,7 @@ def load_questions():
     except OSError as err:
         print(f'OSError: {err}')
     else:
-        print(quiz_questions)
+        return quiz_questions
 
 
 def start_command(update, context):
@@ -63,7 +64,15 @@ def echo_message(update, context):
     custom_keyboard = [['Новый вопрос', 'Сдаться'], ['Мой счёт']]
     reply_markup = ReplyKeyboardMarkup(custom_keyboard)
 
-    update.message.reply_text(update.message.text, reply_markup=reply_markup)
+    quiz_questions = load_questions()
+    random_number_questions = random.randint(0,  len(quiz_questions)-1)
+
+    if update.message.text == 'Новый вопрос':
+        quiz_question = quiz_questions[random_number_questions]['Вопрос']
+    else:
+        quiz_question = 'Вопрос не определён'
+
+    update.message.reply_text(quiz_question, reply_markup=reply_markup)
 
 
 def main():
