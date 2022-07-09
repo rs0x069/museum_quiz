@@ -43,6 +43,7 @@ def load_questions():
                     # Method 2 to find answer
                     if re.search(r'^Ответ:$', line):
                         answer = readable_file.readline().rstrip()
+                        answer = answer.translate({ord(c): None for c in '."[]'}).strip().lower()
 
                         quiz_questions.append({
                             'Вопрос': question,
@@ -61,7 +62,7 @@ def start_command(update, context):
     update.message.reply_text('Привет! Я бот для викторин!', reply_markup=reply_markup)
 
 
-def echo_message(update, context):
+def quiz(update, context):
     custom_keyboard = [['Новый вопрос', 'Сдаться'], ['Мой счёт']]
     reply_markup = ReplyKeyboardMarkup(custom_keyboard)
 
@@ -79,18 +80,49 @@ def echo_message(update, context):
         decode_responses=True
     )
 
+    user_id = update.message.from_user.id
+
     if update.message.text == 'Новый вопрос':
+        wished_question = db_redis.get(user_id)
+
+        if wished_question:
+            return update.message.reply_text('Нужно ответить на загаданный вопрос. Сдаёшься?',
+                                             reply_markup=reply_markup)
+
         quiz_questions = load_questions()
         random_number_questions = random.randint(0, len(quiz_questions) - 1)
-        quiz_question = quiz_questions[random_number_questions]['Вопрос']
-        user_id = update.message.from_user.id
+        random_quiz_question = quiz_questions[random_number_questions]['Вопрос']
 
-        db_redis.set(user_id, quiz_question)
-        quiz_question = db_redis.get(user_id)
+        db_redis.set(user_id, random_quiz_question)
+        quiz_response = random_quiz_question
+
+    elif update.message.text == 'Сдаться':
+        quiz_response = 'Не сдавайся, попробуй ещё раз'
+
+    elif update.message.text == 'Мой счёт':
+        quiz_response = 'Ваш счёт'
+
     else:
-        quiz_question = 'Вопрос не определён'
+        wished_question = db_redis.get(user_id)
 
-    update.message.reply_text(quiz_question, reply_markup=reply_markup)
+        if not wished_question:
+            return update.message.reply_text('Для следующего вопроса нажми "Новый вопрос"', reply_markup=reply_markup)
+
+        user_answer = ''.join(update.message.text).lower()
+
+        correct_answer = ''
+        for quiz_question in load_questions():
+            if quiz_question['Вопрос'] == wished_question:
+                correct_answer = quiz_question['Ответ']
+                break
+
+        if user_answer == correct_answer:
+            quiz_response = 'Правильно! Поздравляю! Для следующего вопроса нажми "Новый вопрос"'
+            db_redis.delete(user_id)
+        else:
+            quiz_response = 'Неправильно… Попробуешь ещё раз?'
+
+    update.message.reply_text(quiz_response, reply_markup=reply_markup)
 
 
 def main():
@@ -111,10 +143,13 @@ def main():
         decode_responses=True
     )
 
+    for item in load_questions():
+        print(item['Ответ'])
+
     updater = Updater(telegram_token)
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler('start', start_command))
-    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo_message, pass_user_data=True))
+    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, quiz))
 
     updater.start_polling()
     updater.idle()
