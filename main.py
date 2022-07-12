@@ -145,48 +145,6 @@ def handle_giving_up(update, context, db_redis):
     return Quiz.ANSWER
 
 
-def quiz(update, context, db_redis):
-    user_id = update.message.from_user.id
-
-    if update.message.text == 'Новый вопрос':
-        wished_question = db_redis.get(user_id)
-
-        if wished_question:
-            return update.message.reply_markdown(
-                f'Нужно ответить на загаданный вопрос. Сдаёшься?\n`{wished_question}`',
-                reply_markup=reply_markup)
-
-        quiz_questions = load_questions()
-        random_number_questions = random.randint(0, len(quiz_questions) - 1)
-        random_quiz_question = quiz_questions[random_number_questions]['Вопрос']
-
-        db_redis.set(user_id, random_quiz_question)
-        quiz_response = random_quiz_question
-
-    elif update.message.text == 'Сдаться':
-        quiz_response = 'Не сдавайся, попробуй ещё раз'
-
-    elif update.message.text == 'Мой счёт':
-        quiz_response = 'Ваш счёт'
-
-    else:
-        wished_question = db_redis.get(user_id)
-
-        if not wished_question:
-            return update.message.reply_text('Для следующего вопроса нажми "Новый вопрос"', reply_markup=reply_markup)
-
-        user_answer = ''.join(update.message.text).lower()
-        correct_answer = get_correct_answer(wished_question)
-
-        if user_answer == correct_answer:
-            quiz_response = 'Правильно! Поздравляю! Для следующего вопроса нажми "Новый вопрос"'
-            db_redis.delete(user_id)
-        else:
-            quiz_response = 'Неправильно… Попробуешь ещё раз?'
-
-    update.message.reply_text(quiz_response, reply_markup=reply_markup)
-
-
 def cancel_command(update, context):
     update.message.reply_text(
         'До свидания! Попробуйте пройти викторину ещё раз.', reply_markup=ReplyKeyboardRemove()
@@ -215,7 +173,6 @@ def main():
     updater = Updater(telegram_token)
     dispatcher = updater.dispatcher
 
-    # quiz_redis = partial(quiz, db_redis=db_redis)
     handle_new_question_request_redis = partial(handle_new_question_request, db_redis=db_redis)
     handle_solution_attempt_redis = partial(handle_solution_attempt, db_redis=db_redis)
     handle_giving_up_redis = partial(handle_giving_up, db_redis=db_redis)
@@ -232,14 +189,10 @@ def main():
                 MessageHandler(Filters.regex('^Новый вопрос$'), handle_new_question_request_redis),
                 MessageHandler(Filters.regex('^Сдаться$'), handle_giving_up_redis)
             ],
-            # Quiz.GIVING_UP: [MessageHandler(Filters.regex('^Сдаться$'), handle_giving_up_redis)]
         },
         fallbacks=[CommandHandler('cancel', cancel_command)]
     )
     dispatcher.add_handler(conv_handler)
-
-    # dispatcher.add_handler(CommandHandler('start', start_command))
-    # dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, quiz_redis))
 
     updater.start_polling()
     updater.idle()
