@@ -23,7 +23,8 @@ class Quiz(Enum):
 
 
 def start_command(update, context):
-    update.message.reply_text('Привет! Я бот для викторин!', reply_markup=reply_markup)
+    update.message.reply_text('Привет! Нажми "Новый вопрос" для начала викторины\n /cancel - для отмены',
+                              reply_markup=reply_markup)
     return Quiz.NEW_QUESTION
 
 
@@ -76,7 +77,7 @@ def handle_giving_up(update, context, db_redis):
         return Quiz.NEW_QUESTION
 
     correct_answer = get_correct_answer(wished_question)
-    update.message.reply_text(f'Правильный ответ: {correct_answer}', reply_markup=reply_markup)
+    update.message.reply_text(f'Вот тебе правильный ответ: {correct_answer}', reply_markup=reply_markup)
 
     random_quiz_question = get_random_quiz_question()
     db_redis.set(user_id, random_quiz_question)

@@ -49,7 +49,7 @@ def quiz(event, vk_api, db_redis):
         correct_answer = get_correct_answer(wished_question)
         vk_api.messages.send(
             user_id=event.user_id,
-            message=f'Правильный ответ: {correct_answer}',
+            message=f'Вот тебе правильный ответ: {correct_answer}',
             random_id=random.randint(1, 1000),
             keyboard=keyboard.get_keyboard()
         )
