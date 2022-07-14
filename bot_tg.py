@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
 
-from questions_management import load_questions, get_random_quiz_question, get_correct_answer
+from questions_management import get_random_quiz_question, get_correct_answer
 
 reply_keyboard = [['Новый вопрос', 'Сдаться'], ['Мой счёт']]
 reply_markup = ReplyKeyboardMarkup(reply_keyboard)

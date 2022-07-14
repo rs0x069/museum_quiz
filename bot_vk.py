@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from vk_api.longpoll import VkLongPoll, VkEventType
 
-from questions_management import load_questions, get_random_quiz_question, get_correct_answer
+from questions_management import get_random_quiz_question, get_correct_answer
 
 keyboard = VkKeyboard(one_time=True)
 keyboard.add_button('Новый вопрос', color=VkKeyboardColor.PRIMARY)
