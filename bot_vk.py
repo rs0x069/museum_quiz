@@ -10,12 +10,6 @@ from vk_api.longpoll import VkLongPoll, VkEventType
 
 from questions_management import get_random_quiz_question, get_correct_answer
 
-keyboard = VkKeyboard(one_time=True)
-keyboard.add_button('Новый вопрос', color=VkKeyboardColor.PRIMARY)
-keyboard.add_button('Сдаться', color=VkKeyboardColor.NEGATIVE)
-keyboard.add_line()
-keyboard.add_button('Мой счёт', color=VkKeyboardColor.POSITIVE)
-
 
 def quiz(event, vk_api, db_redis):
     user_id = event.user_id
@@ -117,4 +111,10 @@ def main():
 
 
 if __name__ == '__main__':
+    keyboard = VkKeyboard(one_time=True)
+    keyboard.add_button('Новый вопрос', color=VkKeyboardColor.PRIMARY)
+    keyboard.add_button('Сдаться', color=VkKeyboardColor.NEGATIVE)
+    keyboard.add_line()
+    keyboard.add_button('Мой счёт', color=VkKeyboardColor.POSITIVE)
+
     main()

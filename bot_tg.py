@@ -10,9 +10,6 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Conve
 
 from questions_management import get_random_quiz_question, get_correct_answer
 
-reply_keyboard = [['Новый вопрос', 'Сдаться'], ['Мой счёт']]
-reply_markup = ReplyKeyboardMarkup(reply_keyboard)
-
 
 @unique
 class Quiz(Enum):
@@ -140,4 +137,6 @@ def main():
 
 
 if __name__ == '__main__':
+    reply_keyboard = [['Новый вопрос', 'Сдаться'], ['Мой счёт']]
+    reply_markup = ReplyKeyboardMarkup(reply_keyboard)
     main()
