@@ -30,10 +30,10 @@ def load_questions():
                             question += search_pattern.replace('\n', ' ')
                         question = question.rstrip()
 
-                    # Method 2 to find answer
                     if re.search(r'^Ответ:$', line):
                         answer = readable_file.readline().rstrip()
-                        answer_lowercase = answer.translate({ord(c): None for c in '."[]'}).strip().lower()
+                        answer_cleaned = answer.translate({ord(character): None for character in '."[]'}).strip()
+                        answer_lowercase = answer_cleaned.lower()
 
                         quiz_questions.append({
                             'Вопрос': question,
