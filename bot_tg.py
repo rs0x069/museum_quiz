@@ -121,9 +121,9 @@ def main():
             Quiz.NEW_QUESTION: [MessageHandler(Filters.regex('^Новый вопрос$'), handle_new_question_request_redis)],
             Quiz.ANSWER: [
                 MessageHandler(
-                    Filters.text &
-                    ~(Filters.command | Filters.regex('^Сдаться$') | Filters.regex('^Мой счёт$') | Filters.regex(
-                        '^Новый вопрос$')), handle_solution_attempt_redis),
+                    Filters.text & ~(Filters.command | Filters.regex('^Сдаться$') | Filters.regex('^Новый вопрос$')),
+                    handle_solution_attempt_redis
+                ),
                 MessageHandler(Filters.regex('^Новый вопрос$'), handle_new_question_request_redis),
                 MessageHandler(Filters.regex('^Сдаться$'), handle_giving_up_redis)
             ],
@@ -137,6 +137,6 @@ def main():
 
 
 if __name__ == '__main__':
-    reply_keyboard = [['Новый вопрос', 'Сдаться'], ['Мой счёт']]
+    reply_keyboard = [['Новый вопрос', 'Сдаться']]
     reply_markup = ReplyKeyboardMarkup(reply_keyboard)
     main()

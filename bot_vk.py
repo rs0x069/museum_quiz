@@ -52,9 +52,6 @@ def quiz(event, vk_api, db_redis):
         db_redis.set(user_id, random_quiz_question)
         quiz_response = f'Новый вопрос: {random_quiz_question}'
 
-    elif event.text == 'Мой счёт':
-        quiz_response = 'Ваш счёт'
-
     else:
         wished_question = db_redis.get(user_id)
 
@@ -114,7 +111,5 @@ if __name__ == '__main__':
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button('Новый вопрос', color=VkKeyboardColor.PRIMARY)
     keyboard.add_button('Сдаться', color=VkKeyboardColor.NEGATIVE)
-    keyboard.add_line()
-    keyboard.add_button('Мой счёт', color=VkKeyboardColor.POSITIVE)
 
     main()
