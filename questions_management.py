@@ -30,11 +30,6 @@ def load_questions():
                             question += search_pattern.replace('\n', ' ')
                         question = question.rstrip()
 
-                        # Method 1 to find answer
-                        # while readable_file.readline() != 'Ответ:\n':
-                        #     next(readable_file)
-                        # answer = readable_file.readline().rstrip()
-
                     # Method 2 to find answer
                     if re.search(r'^Ответ:$', line):
                         answer = readable_file.readline().rstrip()
