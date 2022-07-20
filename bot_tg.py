@@ -138,5 +138,5 @@ def main():
 
 if __name__ == '__main__':
     reply_keyboard = [['Новый вопрос', 'Сдаться']]
-    reply_markup = ReplyKeyboardMarkup(reply_keyboard)
+    reply_markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True)
     main()
