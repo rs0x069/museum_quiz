@@ -15,7 +15,7 @@ def load_questions():
         quiz_files.sort()
     except OSError as err:
         print(f'OSError: {err}')
-        return False
+        return None
 
     quiz_questions = []
     try:
@@ -47,12 +47,20 @@ def load_questions():
 
 def get_random_quiz_question():
     quiz_questions = load_questions()
+
+    if not quiz_questions:
+        raise Exception('No data')
+
     random_number_questions = random.randint(0, len(quiz_questions) - 1)
     return quiz_questions[random_number_questions]['Вопрос']
 
 
 def get_correct_answer(wished_question):
-    for quiz_question in load_questions():
+    quiz_questions = load_questions()
+
+    if not quiz_questions:
+        raise Exception('No data')
+
+    for quiz_question in quiz_questions:
         if quiz_question['Вопрос'] == wished_question:
             return quiz_question['Ответ']
-    return None
