@@ -1,7 +1,7 @@
 import os
 import random
-import redis
 
+import redis
 import vk_api as vk
 
 from dotenv import load_dotenv
