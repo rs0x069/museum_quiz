@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from vk_api.longpoll import VkLongPoll, VkEventType
 
-from questions_management import get_random_quiz_question, get_correct_answer
+from questions_management import get_random_quiz_question, get_correct_answer, load_questions
 
 
 def quiz(event, vk_api, db_redis):
@@ -25,7 +25,7 @@ def quiz(event, vk_api, db_redis):
                 keyboard=keyboard.get_keyboard()
             )
 
-        random_quiz_question = get_random_quiz_question()
+        random_quiz_question = get_random_quiz_question(quiz_questions)
         db_redis.set(user_id, random_quiz_question)
         quiz_response = random_quiz_question
 
@@ -40,7 +40,7 @@ def quiz(event, vk_api, db_redis):
                 keyboard=keyboard.get_keyboard()
             )
 
-        correct_answer = get_correct_answer(wished_question)
+        correct_answer = get_correct_answer(quiz_questions, wished_question)
         vk_api.messages.send(
             user_id=event.user_id,
             message=f'Вот тебе правильный ответ: {correct_answer}',
@@ -48,7 +48,7 @@ def quiz(event, vk_api, db_redis):
             keyboard=keyboard.get_keyboard()
         )
 
-        random_quiz_question = get_random_quiz_question()
+        random_quiz_question = get_random_quiz_question(quiz_questions)
         db_redis.set(user_id, random_quiz_question)
         quiz_response = f'Новый вопрос: {random_quiz_question}'
 
@@ -64,7 +64,7 @@ def quiz(event, vk_api, db_redis):
             )
 
         user_answer = ''.join(event.text).lower()
-        correct_answer = get_correct_answer(wished_question)
+        correct_answer = get_correct_answer(quiz_questions, wished_question)
 
         if user_answer == correct_answer:
             quiz_response = 'Правильно! Поздравляю! Для следующего вопроса нажми "Новый вопрос"'
@@ -111,5 +111,5 @@ if __name__ == '__main__':
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button('Новый вопрос', color=VkKeyboardColor.PRIMARY)
     keyboard.add_button('Сдаться', color=VkKeyboardColor.NEGATIVE)
-
+    quiz_questions = load_questions()
     main()

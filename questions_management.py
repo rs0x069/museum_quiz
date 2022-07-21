@@ -45,9 +45,7 @@ def load_questions():
         return quiz_questions
 
 
-def get_random_quiz_question():
-    quiz_questions = load_questions()
-
+def get_random_quiz_question(quiz_questions):
     if not quiz_questions:
         raise Exception('No data')
 
@@ -55,9 +53,7 @@ def get_random_quiz_question():
     return quiz_questions[random_number_questions]['Вопрос']
 
 
-def get_correct_answer(wished_question):
-    quiz_questions = load_questions()
-
+def get_correct_answer(quiz_questions, wished_question):
     if not quiz_questions:
         raise Exception('No data')
 

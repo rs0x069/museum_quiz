@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
 
-from questions_management import get_random_quiz_question, get_correct_answer
+from questions_management import get_random_quiz_question, get_correct_answer, load_questions
 
 
 @unique
@@ -34,7 +34,7 @@ def handle_new_question_request(update, context, db_redis):
                                       reply_markup=reply_markup)
         return Quiz.ANSWER
 
-    random_quiz_question = get_random_quiz_question()
+    random_quiz_question = get_random_quiz_question(quiz_questions)
     db_redis.set(user_id, random_quiz_question)
 
     update.message.reply_text(random_quiz_question, reply_markup=reply_markup)
@@ -51,7 +51,7 @@ def handle_solution_attempt(update, context, db_redis):
         return Quiz.NEW_QUESTION
 
     user_answer = ''.join(update.message.text).lower()
-    correct_answer = get_correct_answer(wished_question)
+    correct_answer = get_correct_answer(quiz_questions, wished_question)
 
     if user_answer == correct_answer:
         quiz_response = 'Правильно! Поздравляю! Для следующего вопроса нажми "Новый вопрос"'
@@ -73,10 +73,10 @@ def handle_giving_up(update, context, db_redis):
                                   reply_markup=reply_markup)
         return Quiz.NEW_QUESTION
 
-    correct_answer = get_correct_answer(wished_question)
+    correct_answer = get_correct_answer(quiz_questions, wished_question)
     update.message.reply_text(f'Вот тебе правильный ответ: {correct_answer}', reply_markup=reply_markup)
 
-    random_quiz_question = get_random_quiz_question()
+    random_quiz_question = get_random_quiz_question(quiz_questions)
     db_redis.set(user_id, random_quiz_question)
     update.message.reply_text(f'Новый вопрос: {random_quiz_question}', reply_markup=reply_markup)
 
@@ -142,4 +142,5 @@ def main():
 if __name__ == '__main__':
     reply_keyboard = [['Новый вопрос', 'Сдаться']]
     reply_markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True)
+    quiz_questions = load_questions()
     main()
