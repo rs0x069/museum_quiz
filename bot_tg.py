@@ -118,7 +118,10 @@ def main():
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start_command)],
         states={
-            Quiz.NEW_QUESTION: [MessageHandler(Filters.regex('^Новый вопрос$'), handle_new_question_request_redis)],
+            Quiz.NEW_QUESTION: [
+                MessageHandler(Filters.regex('^Новый вопрос$'), handle_new_question_request_redis),
+                MessageHandler(Filters.regex('^Сдаться$'), handle_giving_up_redis)
+            ],
             Quiz.ANSWER: [
                 MessageHandler(
                     Filters.text & ~(Filters.command | Filters.regex('^Сдаться$') | Filters.regex('^Новый вопрос$')),
