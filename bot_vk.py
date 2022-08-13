@@ -80,7 +80,7 @@ def quiz(event, vk_api, db_redis):
     )
 
 
-def main():
+if __name__ == '__main__':
     load_dotenv()
 
     vk_token = os.getenv("VK_TOKEN")
@@ -102,14 +102,11 @@ def main():
     vk_api = vk_session.get_api()
     longpoll = VkLongPoll(vk_session)
 
-    for event in longpoll.listen():
-        if event.type == VkEventType.MESSAGE_NEW and event.to_me:
-            quiz(event, vk_api, db_redis)
-
-
-if __name__ == '__main__':
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button('Новый вопрос', color=VkKeyboardColor.PRIMARY)
     keyboard.add_button('Сдаться', color=VkKeyboardColor.NEGATIVE)
     quiz_questions = load_questions()
-    main()
+
+    for event in longpoll.listen():
+        if event.type == VkEventType.MESSAGE_NEW and event.to_me:
+            quiz(event, vk_api, db_redis)
