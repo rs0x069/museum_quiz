@@ -21,6 +21,9 @@ class Quiz(Enum):
 
 
 def start_command(update, context):
+    reply_keyboard = [['Новый вопрос', 'Сдаться']]
+    reply_markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True)
+
     update.message.reply_text('Привет! Нажми "Новый вопрос" для начала викторины\n /cancel - для отмены',
                               reply_markup=reply_markup)
     return Quiz.NEW_QUESTION
@@ -31,14 +34,13 @@ def handle_new_question_request(update, context, db_redis):
 
     wished_question = db_redis.get(user_id)
     if wished_question:
-        update.message.reply_markdown(f'Нужно ответить на загаданный вопрос. Сдаёшься?\n`{wished_question}`',
-                                      reply_markup=reply_markup)
+        update.message.reply_markdown(f'Нужно ответить на загаданный вопрос. Сдаёшься?\n`{wished_question}`')
         return Quiz.ANSWER
 
     random_quiz_question = get_random_quiz_question(quiz_questions)
     db_redis.set(user_id, random_quiz_question)
 
-    update.message.reply_text(random_quiz_question, reply_markup=reply_markup)
+    update.message.reply_text(random_quiz_question)
 
     return Quiz.ANSWER
 
@@ -48,7 +50,7 @@ def handle_solution_attempt(update, context, db_redis):
 
     wished_question = db_redis.get(user_id)
     if not wished_question:
-        update.message.reply_text('Для следующего вопроса нажми "Новый вопрос"', reply_markup=reply_markup)
+        update.message.reply_text('Для следующего вопроса нажми "Новый вопрос"')
         return Quiz.NEW_QUESTION
 
     user_answer = ''.join(update.message.text).lower()
@@ -57,11 +59,11 @@ def handle_solution_attempt(update, context, db_redis):
     if user_answer == correct_answer:
         quiz_response = 'Правильно! Поздравляю! Для следующего вопроса нажми "Новый вопрос"'
         db_redis.delete(user_id)
-        update.message.reply_text(quiz_response, reply_markup=reply_markup)
+        update.message.reply_text(quiz_response)
         return Quiz.NEW_QUESTION
     else:
         quiz_response = 'Неправильно… Попробуешь ещё раз?'
-        update.message.reply_text(quiz_response, reply_markup=reply_markup)
+        update.message.reply_text(quiz_response)
         return Quiz.ANSWER
 
 
@@ -70,16 +72,15 @@ def handle_giving_up(update, context, db_redis):
 
     wished_question = db_redis.get(user_id)
     if not wished_question:
-        update.message.reply_text('Вопрос не задан. Для следующего вопроса нажми "Новый вопрос"',
-                                  reply_markup=reply_markup)
+        update.message.reply_text('Вопрос не задан. Для следующего вопроса нажми "Новый вопрос"')
         return Quiz.NEW_QUESTION
 
     correct_answer = get_correct_answer(quiz_questions, wished_question)
-    update.message.reply_text(f'Вот тебе правильный ответ: {correct_answer}', reply_markup=reply_markup)
+    update.message.reply_text(f'Вот тебе правильный ответ: {correct_answer}')
 
     random_quiz_question = get_random_quiz_question(quiz_questions)
     db_redis.set(user_id, random_quiz_question)
-    update.message.reply_text(f'Новый вопрос: {random_quiz_question}', reply_markup=reply_markup)
+    update.message.reply_text(f'Новый вопрос: {random_quiz_question}')
 
     return Quiz.ANSWER
 
@@ -91,8 +92,9 @@ def cancel_command(update, context):
     return ConversationHandler.END
 
 
-def main():
+if __name__ == '__main__':
     load_dotenv()
+    quiz_questions = load_questions()
 
     telegram_token = os.getenv("TELEGRAM_TOKEN")
     redis_host = os.getenv("REDIS_HOST")
@@ -138,10 +140,3 @@ def main():
 
     updater.start_polling()
     updater.idle()
-
-
-if __name__ == '__main__':
-    reply_keyboard = [['Новый вопрос', 'Сдаться']]
-    reply_markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True)
-    quiz_questions = load_questions()
-    main()

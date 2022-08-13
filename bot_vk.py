@@ -82,6 +82,7 @@ def quiz(event, vk_api, db_redis):
 
 if __name__ == '__main__':
     load_dotenv()
+    quiz_questions = load_questions()
 
     vk_token = os.getenv("VK_TOKEN")
     redis_host = os.getenv("REDIS_HOST")
@@ -105,7 +106,6 @@ if __name__ == '__main__':
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button('Новый вопрос', color=VkKeyboardColor.PRIMARY)
     keyboard.add_button('Сдаться', color=VkKeyboardColor.NEGATIVE)
-    quiz_questions = load_questions()
 
     for event in longpoll.listen():
         if event.type == VkEventType.MESSAGE_NEW and event.to_me:
