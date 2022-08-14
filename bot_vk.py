@@ -12,11 +12,11 @@ from vk_api.longpoll import VkLongPoll, VkEventType
 from questions_management import get_random_quiz_question, get_correct_answer, load_questions
 
 
-def quiz(event, vk_api, db_conn, keyboard, questions):
+def quiz(event, vk_api, db_redis, keyboard, questions):
     user_id = event.user_id
 
     if event.text == 'Новый вопрос':
-        wished_question = db_conn.get(user_id)
+        wished_question = db_redis.get(user_id)
 
         if wished_question:
             return vk_api.messages.send(
@@ -27,11 +27,11 @@ def quiz(event, vk_api, db_conn, keyboard, questions):
             )
 
         random_quiz_question = get_random_quiz_question(questions)
-        db_conn.set(user_id, random_quiz_question)
+        db_redis.set(user_id, random_quiz_question)
         quiz_response = random_quiz_question
 
     elif event.text == 'Сдаться':
-        wished_question = db_conn.get(user_id)
+        wished_question = db_redis.get(user_id)
 
         if not wished_question:
             return vk_api.messages.send(
@@ -50,11 +50,11 @@ def quiz(event, vk_api, db_conn, keyboard, questions):
         )
 
         random_quiz_question = get_random_quiz_question(questions)
-        db_conn.set(user_id, random_quiz_question)
+        db_redis.set(user_id, random_quiz_question)
         quiz_response = f'Новый вопрос: {random_quiz_question}'
 
     else:
-        wished_question = db_conn.get(user_id)
+        wished_question = db_redis.get(user_id)
 
         if not wished_question:
             return vk_api.messages.send(
@@ -69,7 +69,7 @@ def quiz(event, vk_api, db_conn, keyboard, questions):
 
         if user_answer == correct_answer:
             quiz_response = 'Правильно! Поздравляю! Для следующего вопроса нажми "Новый вопрос"'
-            db_conn.delete(user_id)
+            db_redis.delete(user_id)
         else:
             quiz_response = 'Неправильно… Попробуешь ещё раз?'
 
@@ -96,7 +96,7 @@ def main():
     redis_username = os.getenv("REDIS_USERNAME")
     redis_password = os.getenv("REDIS_PASSWORD")
 
-    redis_conn = redis.Redis(
+    db_redis = redis.Redis(
         host=redis_host,
         port=int(redis_port),
         db=0,
@@ -106,7 +106,7 @@ def main():
     )
 
     vk_session = vk.VkApi(token=vk_token)
-    vk_get_api = vk_session.get_api()
+    vk_api = vk_session.get_api()
     longpoll = VkLongPoll(vk_session)
 
     vk_keyboard = VkKeyboard(one_time=True)
@@ -116,7 +116,7 @@ def main():
     for vk_event in longpoll.listen():
         if vk_event.type == VkEventType.MESSAGE_NEW and vk_event.to_me:
             try:
-                quiz(vk_event, vk_get_api, redis_conn, vk_keyboard, quiz_questions)
+                quiz(vk_event, vk_api, db_redis, vk_keyboard, quiz_questions)
             except VkApiError as err:
                 print(f'VkApiError: {err}')
             except ValueError as err:
