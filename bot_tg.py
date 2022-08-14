@@ -29,26 +29,26 @@ def start_command(update, context):
     return Quiz.NEW_QUESTION
 
 
-def handle_new_question_request(update, context, db_redis):
+def handle_new_question_request(update, context, db_conn):
     user_id = update.message.from_user.id
 
-    wished_question = db_redis.get(user_id)
+    wished_question = db_conn.get(user_id)
     if wished_question:
         update.message.reply_markdown(f'Нужно ответить на загаданный вопрос. Сдаёшься?\n`{wished_question}`')
         return Quiz.ANSWER
 
     random_quiz_question = get_random_quiz_question(quiz_questions)
-    db_redis.set(user_id, random_quiz_question)
+    db_conn.set(user_id, random_quiz_question)
 
     update.message.reply_text(random_quiz_question)
 
     return Quiz.ANSWER
 
 
-def handle_solution_attempt(update, context, db_redis):
+def handle_solution_attempt(update, context, db_conn):
     user_id = update.message.from_user.id
 
-    wished_question = db_redis.get(user_id)
+    wished_question = db_conn.get(user_id)
     if not wished_question:
         update.message.reply_text('Для следующего вопроса нажми "Новый вопрос"')
         return Quiz.NEW_QUESTION
@@ -58,7 +58,7 @@ def handle_solution_attempt(update, context, db_redis):
 
     if user_answer == correct_answer:
         quiz_response = 'Правильно! Поздравляю! Для следующего вопроса нажми "Новый вопрос"'
-        db_redis.delete(user_id)
+        db_conn.delete(user_id)
         update.message.reply_text(quiz_response)
         return Quiz.NEW_QUESTION
     else:
@@ -67,10 +67,10 @@ def handle_solution_attempt(update, context, db_redis):
         return Quiz.ANSWER
 
 
-def handle_giving_up(update, context, db_redis):
+def handle_giving_up(update, context, db_conn):
     user_id = update.message.from_user.id
 
-    wished_question = db_redis.get(user_id)
+    wished_question = db_conn.get(user_id)
     if not wished_question:
         update.message.reply_text('Вопрос не задан. Для следующего вопроса нажми "Новый вопрос"')
         return Quiz.NEW_QUESTION
@@ -79,7 +79,7 @@ def handle_giving_up(update, context, db_redis):
     update.message.reply_text(f'Вот тебе правильный ответ: {correct_answer}')
 
     random_quiz_question = get_random_quiz_question(quiz_questions)
-    db_redis.set(user_id, random_quiz_question)
+    db_conn.set(user_id, random_quiz_question)
     update.message.reply_text(f'Новый вопрос: {random_quiz_question}')
 
     return Quiz.ANSWER
@@ -102,7 +102,7 @@ if __name__ == '__main__':
     redis_username = os.getenv("REDIS_USERNAME")
     redis_password = os.getenv("REDIS_PASSWORD")
 
-    db_redis = redis.Redis(
+    redis_conn = redis.Redis(
         host=redis_host,
         port=int(redis_port),
         db=0,
@@ -114,9 +114,9 @@ if __name__ == '__main__':
     updater = Updater(telegram_token)
     dispatcher = updater.dispatcher
 
-    handle_new_question_request_redis = partial(handle_new_question_request, db_redis=db_redis)
-    handle_solution_attempt_redis = partial(handle_solution_attempt, db_redis=db_redis)
-    handle_giving_up_redis = partial(handle_giving_up, db_redis=db_redis)
+    handle_new_question_request_redis = partial(handle_new_question_request, db_conn=redis_conn)
+    handle_solution_attempt_redis = partial(handle_solution_attempt, db_conn=redis_conn)
+    handle_giving_up_redis = partial(handle_giving_up, db_conn=redis_conn)
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start_command)],
