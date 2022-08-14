@@ -29,7 +29,7 @@ def start_command(update, context):
     return Quiz.NEW_QUESTION
 
 
-def handle_new_question_request(update, context, db_conn):
+def handle_new_question_request(update, context, db_conn, questions):
     user_id = update.message.from_user.id
 
     wished_question = db_conn.get(user_id)
@@ -37,7 +37,7 @@ def handle_new_question_request(update, context, db_conn):
         update.message.reply_markdown(f'Нужно ответить на загаданный вопрос. Сдаёшься?\n`{wished_question}`')
         return Quiz.ANSWER
 
-    random_quiz_question = get_random_quiz_question(quiz_questions)
+    random_quiz_question = get_random_quiz_question(questions)
     db_conn.set(user_id, random_quiz_question)
 
     update.message.reply_text(random_quiz_question)
@@ -45,7 +45,7 @@ def handle_new_question_request(update, context, db_conn):
     return Quiz.ANSWER
 
 
-def handle_solution_attempt(update, context, db_conn):
+def handle_solution_attempt(update, context, db_conn, questions):
     user_id = update.message.from_user.id
 
     wished_question = db_conn.get(user_id)
@@ -54,7 +54,7 @@ def handle_solution_attempt(update, context, db_conn):
         return Quiz.NEW_QUESTION
 
     user_answer = ''.join(update.message.text).lower()
-    correct_answer = get_correct_answer(quiz_questions, wished_question)
+    correct_answer = get_correct_answer(questions, wished_question)
 
     if user_answer == correct_answer:
         quiz_response = 'Правильно! Поздравляю! Для следующего вопроса нажми "Новый вопрос"'
@@ -67,7 +67,7 @@ def handle_solution_attempt(update, context, db_conn):
         return Quiz.ANSWER
 
 
-def handle_giving_up(update, context, db_conn):
+def handle_giving_up(update, context, db_conn, questions):
     user_id = update.message.from_user.id
 
     wished_question = db_conn.get(user_id)
@@ -75,10 +75,10 @@ def handle_giving_up(update, context, db_conn):
         update.message.reply_text('Вопрос не задан. Для следующего вопроса нажми "Новый вопрос"')
         return Quiz.NEW_QUESTION
 
-    correct_answer = get_correct_answer(quiz_questions, wished_question)
+    correct_answer = get_correct_answer(questions, wished_question)
     update.message.reply_text(f'Вот тебе правильный ответ: {correct_answer}')
 
-    random_quiz_question = get_random_quiz_question(quiz_questions)
+    random_quiz_question = get_random_quiz_question(questions)
     db_conn.set(user_id, random_quiz_question)
     update.message.reply_text(f'Новый вопрос: {random_quiz_question}')
 
@@ -92,7 +92,7 @@ def cancel_command(update, context):
     return ConversationHandler.END
 
 
-if __name__ == '__main__':
+def main():
     load_dotenv()
     quiz_questions = load_questions()
 
@@ -114,9 +114,15 @@ if __name__ == '__main__':
     updater = Updater(telegram_token)
     dispatcher = updater.dispatcher
 
-    handle_new_question_request_redis = partial(handle_new_question_request, db_conn=redis_conn)
-    handle_solution_attempt_redis = partial(handle_solution_attempt, db_conn=redis_conn)
-    handle_giving_up_redis = partial(handle_giving_up, db_conn=redis_conn)
+    handle_new_question_request_redis = partial(handle_new_question_request,
+                                                db_conn=redis_conn,
+                                                questions=quiz_questions)
+    handle_solution_attempt_redis = partial(handle_solution_attempt,
+                                            db_conn=redis_conn,
+                                            questions=quiz_questions)
+    handle_giving_up_redis = partial(handle_giving_up,
+                                     db_conn=redis_conn,
+                                     questions=quiz_questions)
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start_command)],
@@ -140,3 +146,7 @@ if __name__ == '__main__':
 
     updater.start_polling()
     updater.idle()
+
+
+if __name__ == '__main__':
+    main()

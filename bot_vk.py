@@ -11,7 +11,7 @@ from vk_api.longpoll import VkLongPoll, VkEventType
 from questions_management import get_random_quiz_question, get_correct_answer, load_questions
 
 
-def quiz(event, vk_api, db_conn):
+def quiz(event, vk_api, db_conn, keyboard, questions):
     user_id = event.user_id
 
     if event.text == 'Новый вопрос':
@@ -25,7 +25,7 @@ def quiz(event, vk_api, db_conn):
                 keyboard=keyboard.get_keyboard()
             )
 
-        random_quiz_question = get_random_quiz_question(quiz_questions)
+        random_quiz_question = get_random_quiz_question(questions)
         db_conn.set(user_id, random_quiz_question)
         quiz_response = random_quiz_question
 
@@ -40,7 +40,7 @@ def quiz(event, vk_api, db_conn):
                 keyboard=keyboard.get_keyboard()
             )
 
-        correct_answer = get_correct_answer(quiz_questions, wished_question)
+        correct_answer = get_correct_answer(questions, wished_question)
         vk_api.messages.send(
             user_id=event.user_id,
             message=f'Вот тебе правильный ответ: {correct_answer}',
@@ -48,7 +48,7 @@ def quiz(event, vk_api, db_conn):
             keyboard=keyboard.get_keyboard()
         )
 
-        random_quiz_question = get_random_quiz_question(quiz_questions)
+        random_quiz_question = get_random_quiz_question(questions)
         db_conn.set(user_id, random_quiz_question)
         quiz_response = f'Новый вопрос: {random_quiz_question}'
 
@@ -64,7 +64,7 @@ def quiz(event, vk_api, db_conn):
             )
 
         user_answer = ''.join(event.text).lower()
-        correct_answer = get_correct_answer(quiz_questions, wished_question)
+        correct_answer = get_correct_answer(questions, wished_question)
 
         if user_answer == correct_answer:
             quiz_response = 'Правильно! Поздравляю! Для следующего вопроса нажми "Новый вопрос"'
@@ -80,7 +80,7 @@ def quiz(event, vk_api, db_conn):
     )
 
 
-if __name__ == '__main__':
+def main():
     load_dotenv()
     quiz_questions = load_questions()
 
@@ -103,10 +103,14 @@ if __name__ == '__main__':
     vk_get_api = vk_session.get_api()
     longpoll = VkLongPoll(vk_session)
 
-    keyboard = VkKeyboard(one_time=True)
-    keyboard.add_button('Новый вопрос', color=VkKeyboardColor.PRIMARY)
-    keyboard.add_button('Сдаться', color=VkKeyboardColor.NEGATIVE)
+    vk_keyboard = VkKeyboard(one_time=True)
+    vk_keyboard.add_button('Новый вопрос', color=VkKeyboardColor.PRIMARY)
+    vk_keyboard.add_button('Сдаться', color=VkKeyboardColor.NEGATIVE)
 
     for vk_event in longpoll.listen():
         if vk_event.type == VkEventType.MESSAGE_NEW and vk_event.to_me:
-            quiz(vk_event, vk_get_api, redis_conn)
+            quiz(vk_event, vk_get_api, redis_conn, vk_keyboard, quiz_questions)
+
+
+if __name__ == '__main__':
+    main()
