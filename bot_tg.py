@@ -92,9 +92,18 @@ def cancel_command(update, context):
     return ConversationHandler.END
 
 
+def error_handler(update, context):
+    print(context.error)
+
+
 def main():
     load_dotenv()
-    quiz_questions = load_questions()
+
+    quiz_questions = []
+    try:
+        quiz_questions = load_questions()
+    except OSError as err:
+        print(f'OSError: {OSError}')
 
     telegram_token = os.getenv("TELEGRAM_TOKEN")
     redis_host = os.getenv("REDIS_HOST")
@@ -143,6 +152,7 @@ def main():
         fallbacks=[CommandHandler('cancel', cancel_command)]
     )
     dispatcher.add_handler(conv_handler)
+    dispatcher.add_error_handler(error_handler)
 
     updater.start_polling()
     updater.idle()

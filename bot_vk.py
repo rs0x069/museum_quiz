@@ -5,6 +5,7 @@ import redis
 import vk_api as vk
 
 from dotenv import load_dotenv
+from vk_api.exceptions import VkApiError
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from vk_api.longpoll import VkLongPoll, VkEventType
 
@@ -82,7 +83,12 @@ def quiz(event, vk_api, db_conn, keyboard, questions):
 
 def main():
     load_dotenv()
-    quiz_questions = load_questions()
+
+    quiz_questions = []
+    try:
+        quiz_questions = load_questions()
+    except OSError as err:
+        print(f'OSError: {OSError}')
 
     vk_token = os.getenv("VK_TOKEN")
     redis_host = os.getenv("REDIS_HOST")
@@ -109,7 +115,12 @@ def main():
 
     for vk_event in longpoll.listen():
         if vk_event.type == VkEventType.MESSAGE_NEW and vk_event.to_me:
-            quiz(vk_event, vk_get_api, redis_conn, vk_keyboard, quiz_questions)
+            try:
+                quiz(vk_event, vk_get_api, redis_conn, vk_keyboard, quiz_questions)
+            except VkApiError as err:
+                print(f'VkApiError: {err}')
+            except ValueError as err:
+                print(f'ValueError: {err}')
 
 
 if __name__ == '__main__':
